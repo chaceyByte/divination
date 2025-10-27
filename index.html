@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>易经64卦抽签</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background-color: #f5f0e6;
+            color: #1a365d;
+            transition: all 0.5s ease;
+        }
+        
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+        
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            border: 8px solid #d4af37;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            transition: transform 5s cubic-bezier(0.17, 0.67, 0.21, 0.99);
+        }
+        
+        .wheel-center {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: #d4af37;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a365d;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .wheel-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .wheel-text {
+            position: absolute;
+            right: 10px;
+            transform-origin: left center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #1a365d;
+            white-space: nowrap;
+        }
+        
+        .result-container {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 16px;
+            border: 1px solid rgba(26, 54, 93, 0.1);
+            box-shadow: 0 8px 32px rgba(26, 54, 93, 0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+        
+        .result-container.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .btn-spin {
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(26, 54, 93, 0.2);
+        }
+        
+        .btn-spin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(26, 54, 93, 0.3);
+        }
+        
+        .btn-spin:active {
+            transform: translateY(0);
+        }
+        
+        .btn-spin:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .fade-in {
+            animation: fadeIn 1s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .hexagram-name {
+            color: #d4af37;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .hexagram-type {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 8px;
+        }
+        
+        .type-best {
+            background-color: rgba(52, 211, 153, 0.2);
+            color: #065f46;
+        }
+        
+        .type-good {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #1e40af;
+        }
+        
+        .type-normal {
+            background-color: rgba(156, 163, 175, 0.2);
+            color: #4b5563;
+        }
+        
+        .type-bad {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #991b1b;
+        }
+        
+        @media (min-width: 768px) {
+            .wheel-container {
+                width: 400px;
+                height: 400px;
+            }
+            
+            .wheel-text {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <div class="container mx-auto px-4 py-8 flex-1">
+        <header class="text-center mb-8 fade-in">
+            <h1 class="text-3xl md:text-4xl font-bold text-1a365d mb-2">易经64卦抽签</h1>
+            <p class="text-gray-600">千万不要迷信</p>
+        </header>
+        
+        <main class="flex flex-col items-center">
+            <div class="wheel-container mb-8">
+                <div class="wheel" id="wheel">
+                    <!-- 64个卦象区域将通过JS动态生成 -->
+                </div>
+                <div class="wheel-center">
+                    <i class="fas fa-yin-yang"></i>
+                </div>
+                <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-0 h-0 border-l-8 border-r-8 border-b-16 border-l-transparent border-r-transparent border-b-d4af37"></div>
+            </div>
+            
+            <button id="spinBtn" class="btn-spin mb-12">
+                <i class="fas fa-redo mr-2"></i>开始抽签
+            </button>
+            
+            <div class="result-container w-full max-w-2xl p-6 mb-8" id="resultContainer">
+                <div id="resultContent">
+                    <!-- 结果内容将通过JS动态填充 -->
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <footer class="bg-1a365d text-white py-4 text-center text-sm">
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 64卦数据
+            const hexagrams = [
+                { name: "乾卦", type: "上上卦", positive: "刚健中正，自强不息，事业顺利，领导力强。", negative: "过度刚愎，易犯'亢龙有悔'，需知进退。", description: "象征天，六爻皆阳，寓意万物创始，'元亨利贞'为卦辞核心。" },
+                { name: "坤卦", type: "上上卦", positive: "柔顺包容，厚德载物，善于合作，终成大业。", negative: "过度顺从，易'先迷后得'，需坚守主见。", description: "象征地，纯阴之卦，以雌马为喻，强调顺势而为的智慧。" },
+                { name: "屯卦", type: "下下卦", positive: "初始艰难但潜力无限，如'雷雨之动满盈'，坚定前行必欣欣向荣。", negative: "创业初期险阻重重，冒进则'泣血涟如'，需循序渐进。", description: "象征万物萌生，坎上震下，寓意'始生之艰难'。" },
+                { name: "蒙卦", type: "中下卦", positive: "启蒙教育，如'山下出泉'，接受引导可开启智慧。", negative: "蒙昧无知，固执己见则'困蒙吝'，需虚心学习。", description: "象征教育，艮上坎下，强调'匪我求童蒙，童蒙求我'的主动学习。" },
+                { name: "需卦", type: "中上卦", positive: "守正待机，如'云上于天'，积蓄力量终会'光亨贞吉'。", negative: "急躁冒进则'需于泥，致寇至'，需耐心等待时机。", description: "象征等待，坎上乾下，教导'有孚，光亨，贞吉'的处世智慧。" },
+                { name: "讼卦", type: "中下卦", positive: "有理有据，'利见大人'可化解纠纷。", negative: "争强好胜必'终凶'，需知'讼不可长'的道理。", description: "象征争讼，乾上坎下，警示'以和为贵'的处世哲学。" },
+                { name: "师卦", type: "中上卦", positive: "行险而顺，如'地中有水'，得'丈人'领导可建功立业。", negative: "将帅无能则'舆尸凶'，需严明纪律。", description: "象征军队，坤上坎下，强调'师出以律'的重要性。" },
+                { name: "比卦", type: "上上卦", positive: "诚信团结，如'地上有水'，'显比'则'王用三驱'，广结善缘。", negative: "'比之匪人'必招祸患，需谨慎择友。", description: "象征亲辅，坎上坤下，倡导'建万国，亲诸侯'的和谐之道。" },
+                { name: "小畜卦", type: "下下卦", positive: "蓄养待进，如'风行天上'，'懿文德'可成就大业。", negative: "力量不足时'密云不雨'，需知'小畜'之理。", description: "象征积蓄，巽上乾下，寓意'小有畜聚'，循序渐进。" },
+                { name: "履卦", type: "中上卦", positive: "脚踏实地，如'上天下泽'，'履虎尾不咥人'，循礼而行。", negative: "傲慢无礼则'眇能视，跛能履'，必招凶险。", description: "象征实践，乾上兑下，强调'辨上下，定民志'的秩序观。" },
+                { name: "泰卦", type: "中中卦", positive: "天地交泰，'小往大来'，万事亨通，上下和谐。", negative: "泰极否来，需居安思危，防患未然。", description: "象征通泰，坤上乾下，揭示'阴阳交感'的生机哲理。" },
+                { name: "否卦", type: "中中卦", positive: "否极泰来，坚守正道终会'倾否先否后喜'。", negative: "天地不交，闭塞不通，'大往小来'，需静待转机。", description: "象征闭塞，乾上坤下，警示'俭德辟难'的生存智慧。" },
+                { name: "同人卦", type: "中上卦", positive: "和同于人，'同人于野'，广结善缘可'利涉大川'。", negative: "'同人于宗'则狭隘，需突破小圈子。", description: "象征团结，乾上离下，倡导'类族辨物'的包容精神。" },
+                { name: "大有卦", type: "上上卦", positive: "大获所有，'火在天上'，普照万物，事业辉煌。", negative: "富贵而骄则'自天佑之吉无不利'变为凶险，需保持谦逊。", description: "象征丰盛，离上乾下，强调'遏恶扬善'的处世原则。" },
+                { name: "谦卦", type: "中中卦", positive: "谦虚谨慎，'地中有山'，'谦亨君子有终'，必得善果。", negative: "过度谦卑则失去主见，需不卑不亢。", description: "象征谦逊，坤上艮下，揭示'裒多益寡'的平衡之道。" },
+                { name: "豫卦", type: "中中卦", positive: "安乐愉悦，'雷出地奋'，适时行乐可激发创造力。", negative: "沉迷享乐则'豫则怠'，需居安思危。", description: "象征欢愉，震上坤下，警示'利建侯行师'的忧患意识。" },
+                { name: "随卦", type: "中中卦", positive: "随从应变，'泽中有雷'，择善而从可'元亨利贞'。", negative: "盲目随从则'系小子失丈夫'，需明辨是非。", description: "象征顺应，兑上震下，强调'随时变通'的处世智慧。" },
+                { name: "蛊卦", type: "中中卦", positive: "革新除弊，'山下有风'，勇于改革可'元亨利涉大川'。", negative: "因循守旧则'蛊坏'加剧，需果断行动。", description: "象征整治，艮上巽下，寓意'振民育德'的革新精神。" },
+                { name: "临卦", type: "中上卦", positive: "监临治理，'泽上有地'，宽厚待民可'元亨利贞'。", negative: "苛政猛于虎，'至于八月有凶'，需以德服人。", description: "象征领导，坤上兑下，倡导'教思无穷，容保民无疆'。" },
+                { name: "观卦", type: "中上卦", positive: "观瞻教化，'风行地上'，以德服人可化育万民。", negative: "片面观察则'观我生进退'失据，需全面审视。", description: "象征观察，巽上坤下，强调'省方观民设教'的政治智慧。" },
+                { name: "噬嗑卦", type: "上上卦", positive: "刑罚决断，'雷电合而章'，明辨是非可'利用狱'。", negative: "滥用刑罚则'屦校灭趾'，需公正严明。", description: "象征决断，离上震下，寓意'明罚敕法'的治理原则。" },
+                { name: "贲卦", type: "中中卦", positive: "文饰美化，'山下有火'，内外兼修，相得益彰。", negative: "过度修饰则'白贲无咎'，需返璞归真。", description: "象征装饰，艮上离下，揭示'质胜文则野，文胜质则史'的平衡之道。" },
+                { name: "剥卦", type: "下下卦", positive: "剥落之后必有复兴，'剥极必复'，坚守正道可渡难关。", negative: "小人得势，'剥床以肤'，需隐忍待变。", description: "象征衰败，艮上坤下，警示'上以厚下安宅'的统治智慧。" },
+                { name: "复卦", type: "中中卦", positive: "回复复兴，'雷在地中'，'七日来复'，希望在前。", negative: "'不远复'则无咎，执迷不悟必招祸患。", description: "象征新生，坤上震下，揭示'出入无疾，朋来无咎'的循环哲理。" },
+                { name: "无妄卦", type: "中中卦", positive: "不妄为则'元亨利贞'，顺应自然可获天佑。", negative: "'无妄之灾'难免，需平常心对待。", description: "象征真诚，乾上震下，强调'先王以茂对时育万物'的顺应之道。" },
+                { name: "大畜卦", type: "中中卦", positive: "大为蓄积，'天在山中'，积累德行与学识可成大业。", negative: "'童牛之牿'，需防微杜渐，避免傲慢。", description: "象征蓄养，艮上乾下，倡导'多识前言往行以畜其德'。" },
+                { name: "颐卦", type: "中中卦", positive: "颐养之道，'山下有雷'，'自求口实'，自给自足。", negative: "暴饮暴食则'颐贞凶'，需节制自律。", description: "象征保养，艮上震下，强调'慎言语节饮食'的养生智慧。" },
+                { name: "大过卦", type: "下下卦", positive: "非常时期需非常手段，'栋桡'而'利有攸往'，果断行动。", negative: "过度则'枯杨生华'，需把握分寸。", description: "象征超越，兑上巽下，警示'独立不惧遁世无闷'的勇气。" },
+                { name: "坎卦", type: "下下卦", positive: "险中求胜，'水洊至'，坚守信念可'有孚维心亨'。", negative: "陷入双重险难，'习坎入于坎窞'，需沉着应对。", description: "象征险陷，坎上坎下，揭示'常德行习教事'的坚韧精神。" },
+                { name: "离卦", type: "中上卦", positive: "光明附丽，'明两作'，依附正道可'利贞亨'。", negative: "依附不当则'突如其来如焚如死如弃如'，需明辨是非。", description: "象征光明，离上离下，强调'继明照于四方'的普照精神。" },
+                { name: "咸卦", type: "中上卦", positive: "感应沟通，'山上有泽'，真诚相交可'亨利贞取女吉'。", negative: "'咸其拇'则浅尝辄止，需深入交流。", description: "象征感应，兑上艮下，倡导'虚受人'的包容心态。" },
+                { name: "恒卦", type: "中上卦", positive: "恒久守常，'雷风相与'，持之以恒可'亨无咎利贞'。", negative: "'不恒其德'则'或承之羞'，需坚守信念。", description: "象征持久，震上巽下，强调'立不易方'的坚定品格。" },
+                { name: "遁卦", type: "中下卦", positive: "急流勇退，'天下有山'，适时隐退可避祸患。", negative: "恋栈权位则'遁尾厉'，需审时度势。", description: "象征退避，乾上艮下，揭示'远小人不恶而严'的处世智慧。" },
+                { name: "大壮卦", type: "中上卦", positive: "强盛壮大，'雷在天上'，刚健中正可'利贞'。", negative: "'羝羊触藩'，恃强冒进必招挫折，需刚柔并济。", description: "象征壮大，震上乾下，警示'非礼弗履'的行为准则。" },
+                { name: "晋卦", type: "中上卦", positive: "晋升发展，'明出地上'，品德彰显可'康侯用锡马蕃庶'。", negative: "'晋如鼫鼠'，攀附权贵则'贞厉'，需以德进升。", description: "象征进取，离上坤下，强调'自昭明德'的修身之道。" },
+                { name: "明夷卦", type: "中下卦", positive: "光明受损仍坚守正道，'利艰贞'，终会重见光明。", negative: "'初登于天后入于地'，盲目冒进则加速失败。", description: "象征黑暗，坤上离下，揭示'用晦而明'的韬光养晦智慧。" },
+                { name: "家人卦", type: "中上卦", positive: "家庭和睦，'风自火出'，'利女贞'，家和万事兴。", negative: "家规不严则'家人嗃嗃'，需'言有物而行有恒'。", description: "象征家庭，巽上离下，强调'正家而天下定'的伦理观。" },
+                { name: "睽卦", type: "中下卦", positive: "求同存异，'上火下泽'，小异不妨大同，'小事吉'。", negative: "对立冲突则'睽孤见豕负涂'，需以柔化刚。", description: "象征矛盾，离上兑下，倡导'同而异'的包容精神。" },
+                { name: "蹇卦", type: "中下卦", positive: "艰难险阻中坚守正道，'利西南'，可得贵人相助。", negative: "'往蹇来连'，盲目行动则雪上加霜，需稳健前行。", description: "象征艰难，坎上艮下，揭示'反身修德'的自救之道。" },
+                { name: "解卦", type: "中上卦", positive: "解除困境，'雷雨作'，顺势而为可'利西南'。", negative: "拖延不决则'田获三狐得黄矢'，错失良机。", description: "象征缓解，震上坎下，强调'赦过宥罪'的宽容精神。" },
+                { name: "损卦", type: "中下卦", positive: "损己益人，'山下有泽'，适当取舍可'有孚元吉无咎'。", negative: "过度损己则'三人行则损一人'，需把握平衡。", description: "象征减损，艮上兑下，揭示'惩忿窒欲'的修身之道。" },
+                { name: "益卦", type: "中上卦", positive: "增益发展，'风雷益'，积极进取可'利有攸往利涉大川'。", negative: "'益之用凶事'，盲目增益则招祸患，需适度而为。", description: "象征增益，巽上震下，倡导'见善则迁有过则改'的进取精神。" },
+                { name: "夬卦", type: "中上卦", positive: "决断果决，'泽上于天'，除恶务尽可'扬于王庭'。", negative: "犹豫不决则'惕号莫夜有戎勿恤'，错失良机。", description: "象征决断，兑上乾下，强调'施禄及下'的领导智慧。" },
+                { name: "姤卦", type: "中下卦", positive: "邂逅相遇，'天下有风'，把握机遇可成好事。", negative: "'女壮勿用取女'，阴长阳消需警惕，需坚守原则。", description: "象征遇合，乾上巽下，警示'施命诰四方'的危机意识。" },
+                { name: "萃卦", type: "中上卦", positive: "汇聚团结，'泽上于地'，凝聚人心可'王假有庙'。", negative: "'萃如嗟如'，人心涣散则一事无成，需以德聚人。", description: "象征聚集，兑上坤下，倡导'用大牲吉'的诚信精神。" },
+                { name: "升卦", type: "中上卦", positive: "上升发展，'地中生木'，循序渐进可'元亨用见大人'。", negative: "急功近利则'升虚邑'，根基不稳必致失败。", description: "象征成长，坤上巽下，揭示'积小以高大'的发展哲理。" },
+                { name: "困卦", type: "中下卦", positive: "困境中坚守正道，'困而不失其所亨'，终会迎来转机。", negative: "'困于石据于蒺藜'，怨天尤人则永无出路。", description: "象征困境，兑上坎下，强调'致命遂志'的坚定信念。" },
+                { name: "井卦", type: "中上卦", positive: "恒久之道，'改邑不改井'，滋养他人而不求回报。", negative: "'井渫不食'，才能埋没，需积极展现价值。", description: "象征源泉，坎上巽下，揭示'往来井井'的奉献精神。" },
+                { name: "革卦", type: "中上卦", positive: "革新除弊，'泽火革'，顺应时势可'己日乃孚元亨利贞'。", negative: "'革而信之'，变革而无诚信则众叛亲离。", description: "象征变革，兑上离下，强调'顺天应人'的革新原则。" },
+                { name: "鼎卦", type: "中上卦", positive: "革故鼎新，'火风鼎'，建立新规可'元吉亨'。", negative: "'鼎折足覆公餗'，能力不足而负重责必致失败。", description: "象征权力，离上巽下，揭示'正位凝命'的治国之道。" },
+                { name: "震卦", type: "中下卦", positive: "震惊而后定，'震来虩虩笑言哑哑'，处变不惊。", negative: "'震苏苏'，过度恐惧则方寸大乱，需保持镇定。", description: "象征震动，震上震下，强调'恐惧修省'的应变智慧。" },
+                { name: "艮卦", type: "中下卦", positive: "适时停止，'艮其背不获其身'，知止而后有定。", negative: "'艮其趾'，停滞不前则错失良机，需动静结合。", description: "象征静止，艮上艮下，揭示'动静不失其时'的平衡之道。" },
+                { name: "渐卦", type: "中上卦", positive: "循序渐进，'山上有木'，稳步发展可'女归吉利贞'。", negative: "急于求成则'鸿渐于干'，根基不稳，需耐心积累。", description: "象征渐进，巽上艮下，强调'进以正邦'的发展策略。" },
+                { name: "归妹卦", type: "中下卦", positive: "婚嫁之事，'雷泽归妹'，遵循礼仪可成美满姻缘。", negative: "'归妹愆期'，违背常规则婚姻不幸，需守正而行。", description: "象征婚姻，震上兑下，揭示'天地之大义'的人伦之道。" },
+                { name: "丰卦", type: "中上卦", positive: "丰盛壮大，'雷电皆至'，光明普照可'宜日中'。", negative: "'丰其屋'，骄傲自满则'日中见斗'，盛极而衰。", description: "象征丰盛，震上离下，警示'折其右肱'的谦逊精神。" },
+                { name: "旅卦", type: "中下卦", positive: "旅途虽艰仍坚守正道，'小亨旅贞吉'，终能平安抵达。", negative: "'旅焚其次'，轻率行事则遭遇祸患，需谨慎小心。", description: "象征旅行，离上艮下，强调'明慎用刑而不留狱'的应变之道。" },
+                { name: "巽卦", type: "中上卦", positive: "柔顺谦逊，'随风巽'，深入渗透可'小亨利有攸往'。", negative: "过度顺从则'巽在床下'，失去主见，需柔中带刚。", description: "象征顺从，巽上巽下，揭示'申命行事'的领导艺术。" },
+                { name: "兑卦", type: "中上卦", positive: "喜悦和谐，'丽泽兑'，以诚相待可'亨利贞'。", negative: "'孚于剥'，表面喜悦而内藏危机，需真诚待人。", description: "象征愉悦，兑上兑下，强调'朋友讲习'的社交之道。" },
+                { name: "涣卦", type: "中下卦", positive: "涣散之后重聚人心，'风行水上'，'利涉大川'。", negative: "'涣其群'，过度涣散则难以成事，需凝聚力量。", description: "象征离散，巽上坎下，揭示'先王以享于帝立庙'的团结精神。" },
+                { name: "节卦", type: "中上卦", positive: "节制自律，'泽上有水'，适当约束可'亨苦节不可贞'。", negative: "'不出门庭凶'，过度节制则错失机遇，需把握分寸。", description: "象征节制，坎上兑下，强调'制数度议德行'的修身之道。" },
+                { name: "中孚卦", type: "中上卦", positive: "诚信为本，'泽上有风'，'中孚豚鱼吉'，至诚感通万物。", negative: "'鸣鹤在阴'，诚信不为人知，需坚持到底。", description: "象征诚信，巽上兑下，揭示'有孚挛如'的处世原则。" },
+                { name: "小过卦", type: "中下卦", positive: "小过无妨，'飞鸟遗之音'，顺势而为可'利贞可小事不可大事'。", negative: "'弗过防之'，忽视小过则酿成大祸，需防微杜渐。", description: "象征过度，震上艮下，强调'不宜上宜下'的处世智慧。" },
+                { name: "既济卦", type: "中上卦", positive: "功成业就，'水在火上'，万事亨通但需'初吉终乱'。", negative: "成功之后骄傲自满，则'濡其首厉'，需保持警惕。", description: "象征成功，坎上离下，揭示'终止则乱'的忧患意识。" },
+                { name: "未济卦", type: "中下卦", positive: "未成之事仍有希望，'火在水上'，继续努力可成正果。", negative: "'濡其尾'，行动迟疑则永无成功，需果断前行。", description: "象征未竟，离上坎下，揭示'物不可穷'的发展哲理。" }
+            ];
+            
+            // 创建转盘
+            const wheel = document.getElementById('wheel');
+            const sectionAngle = 360 / hexagrams.length;
+            
+            hexagrams.forEach((hexagram, index) => {
+                const section = document.createElement('div');
+                section.className = 'wheel-section';
+                section.style.transform = `rotate(${index * sectionAngle}deg)`;
+                
+                // 交替颜色
+                if (index % 2 === 0) {
+                    section.style.backgroundColor = 'rgba(26, 54, 93, 0.1)';
+                } else {
+                    section.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
+                }
+                
+                const text = document.createElement('div');
+                text.className = 'wheel-text';
+                text.textContent = hexagram.name;
+                text.style.transform = `rotate(${sectionAngle / 2}deg)`;
+                
+                section.appendChild(text);
+                wheel.appendChild(section);
+            });
+            
+            // 旋转转盘
+            const spinBtn = document.getElementById('spinBtn');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            
+            let isSpinning = false;
+            let currentRotation = 0;
+            
+            spinBtn.addEventListener('click', function() {
+                if (isSpinning) return;
+                
+                isSpinning = true;
+                spinBtn.disabled = true;
+                resultContainer.classList.remove('show');
+                
+                // 随机选择卦象
+                const randomIndex = Math.floor(Math.random() * hexagrams.length);
+                const selectedHexagram = hexagrams[randomIndex];
+                
+                // 计算旋转角度 (5-10圈 + 随机偏移)
+                const spinAngle = 1800 + (randomIndex * sectionAngle) + (Math.random() * sectionAngle);
+                currentRotation += spinAngle;
+                
+                wheel.style.transform = `rotate(${-currentRotation}deg)`;
+                
+                // 旋转结束后显示结果
+                setTimeout(() => {
+                    isSpinning = false;
+                    spinBtn.disabled = false;
+                    
+                    // 显示结果
+                    resultContent.innerHTML = `
+                        <h2 class="hexagram-name mb-2">${selectedHexagram.name} 
+                            <span class="hexagram-type ${
+                                selectedHexagram.type.includes('上上') ? 'type-best' : 
+                                selectedHexagram.type.includes('中上') ? 'type-good' : 
+                                selectedHexagram.type.includes('中中') ? 'type-normal' : 'type-bad'
+                            }">${selectedHexagram.type}</span>
+                        </h2>
+                        <div class="mb-4">
+                            <h3 class="font-bold text-1a365d mb-1">正向：</h3>
+                            <p class="text-gray-700">${selectedHexagram.positive}</p>
+                        </div>
+                        <div class="mb-4">
+                            <h3 class="font-bold text-1a365d mb-1">负向：</h3>
+                            <p class="text-gray-700">${selectedHexagram.negative}</p>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-1a365d mb-1">描述：</h3>
+                            <p class="text-gray-700">${selectedHexagram.description}</p>
+                        </div>
+                    `;
+                    
+                    resultContainer.classList.add('show');
+                }, 5000); // 匹配CSS过渡时间
+            });
+            
+            // 触摸支持
+            wheel.addEventListener('touchstart', handleTouchStart, false);
+            wheel.addEventListener('touchmove', handleTouchMove, false);
+            
+            let touchStartX = 0;
+            
+            function handleTouchStart(e) {
+                touchStartX = e.touches[0].clientX;
+            }
+            
+            function handleTouchMove(e) {
+                if (!touchStartX || isSpinning) return;
+                
+                const touchX = e.touches[0].clientX;
+                const diffX = touchX - touchStartX;
+                
+                if (Math.abs(diffX) > 50) { // 滑动阈值
+                    spinBtn.click();
+                    touchStartX = 0;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
